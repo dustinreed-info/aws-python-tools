@@ -12,3 +12,4 @@ Websync has the following features:
 
 - List buckets
 - List bucket contents
+- Create bucket and configure static website
