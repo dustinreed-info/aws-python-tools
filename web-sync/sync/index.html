@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+    <html>
+        <div class = icons>
+            <link rel="apple-touch-icon" sizes="72x72" href="icons/apple-touch-icon.png">
+            <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+            <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+            <link rel="manifest" href="icons/site.webmanifest">
+            <link rel="mask-icon" href="icons/safari-pinned-tab.svg" color="#5bbad5">
+        </div>
+        <div class = meta>
+            <link rel="stylesheet" href="mystyles.css">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta name="keywords" content="AWS,Dustin Reed,DevOps,Cloud Architect,Cloud Engineer, Cloud Developer, Python, Azure">
+            <meta name="description" content="Information about Dustin Reed.">
+        </div>
+        <title>
+            Dustin Reed's Information
+        </title>
+        <h1>
+            About Me:
+        </h1>
+        <p>
+            My name is Dustin Reed and I am a certified AWS Solutions Architect and Developer. I have been in enterprise IT since 2010.
+            I have had a lifelong passion in computing.  In fact, one of my first memories is typing my name on a Commodore 64.  When I 
+            was about 8 years old I wrote my first application in QBasic to brute force a password that my Dad put on a game that I had liked at the time.
+            In high school I started developing games on my TI-83 calculator and then took a computer programming class and learned
+            Turbo Pascal and C++.  Eventually I started a job in IT Operations.  I then leveraged my programming knowledge to create shell scripts
+            to automate my day to day tasks.  As my programming skills increased, I decided to learn PowerShell as it is integrated with most Windows Services.
+            I am now focusing on Python and boto3 which is a python library for managing AWS services.
+            I am utilizing DevOps methodologies to define my cloud infrastructure as code and track any changes with version control and then automate deploy my
+            code to the cloud platforms with my CI/CD Pipelines.  This allows me to architect infrastructure that is scalable, highly available, secure,
+            repeatable, and consistent.  This eases the burden on releasing software deployments allowing applications to be decoupled
+            into microservices and then distributed to specific resources. 
+        </p>
+        <h1>
+            About my Website:
+        </h1>
+        <p>
+            This website is being distributed via datacenters in the US, Canada, and Europe using a CloudFront distribution. When I need to update my website,
+            I can create a test branch in my AWSCodeCommit repository from my master branch. I then pull my test branch to my local git repo and edit the
+            code via my IDE. Once my code has been verified working locally, I commit it, while creating a comment documenting what the commit is doing,
+            and then push it back into the test branch of my remote repo. I then can review the changes and merge the branches and then I can remove the
+            test branch. I leverage CloudWatch to watch for changes in the test branch and then if there is a change it will call CodePipeline to
+            automatically deploy those changes to the S3 bucket where my test website is hosted. Once I have verified, I can access the website generated
+            by my test branches pipeline I can merge those changes into my Master branch which is then deployed via my Master branches pipeline.
+            Which then deploys my master branch's s3 bucket. I then create a CloudFront distribution and point it to my s3 bucket and create a bucket
+            policy specifying which files I want distributed globally. I then create an A record pointing to my CloudFront alias id in AWS Route 53.
+            If I am impatient, I can invalidate my CloudFront cache, which could cost money, or wait for the TTL on my CloudFront cache expires and the
+            updates to my website will be distributed worldwide.
+        </p>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+        <div class="wrapper">
+            <a target="_blank" href="https://www.dustinreed.info/Resume-Reed-Dustin.pdf"><i class="far fa-2x fa-file"></i></a>
+            <a target="_blank" href="https://www.dustinreed.info/aws-cda-cert.pdf"><i class="fab fa-2x fa-aws"></i></a>
+            <a target="_blank" href="mailto:dustin@dustinreedinfo"><i class="fas fa-2x fa-envelope"></i></a>
+            <a target="_blank" href="https://www.dustinreed.info/aws-csa-cert.pdf"><i class="fab fa-2x fa-aws"></i></a>
+            <a target="_blank" href="https://github.com/dustinreed-info"><i class="fab fa-2x fa-github"></i></a>
+            <a target="_blank" href="https://www.linkedin.com/in/dustinreed/"><i class="fab fa-2x fa-linkedin-in"></i></a>
+        </div>
+    </html>
