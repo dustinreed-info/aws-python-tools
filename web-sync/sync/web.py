@@ -25,6 +25,20 @@ def list_bucket_objects(bucket):
     for obj in s3.Bucket(bucket).objects.all():
         print(obj)
 
+@cli.command('enable-versions')
+@click.argument('bucket')
+def enable_bucket_versioning(bucket):
+    "Keep multiple versions of an object in the same bucket."
+    bucket = s3.Bucket(bucket)
+    bucket.Versioning().enable()
+
+@cli.command('disable-versions')
+@click.argument('bucket')
+def disable_bucket_versioning(bucket):
+    "Disables multiple versions of an object in the same bucket."
+    bucket = s3.Bucket(bucket)
+    bucket.Versioning().suspend()
+
 @cli.command('setup-bucket')
 @click.argument('bucket')
 def setup_bucket(bucket):
@@ -37,6 +51,18 @@ def setup_bucket(bucket):
             new_bucket = s3.create_bucket(Bucket=bucket)
         else:
             new_bucket = s3.Bucket(bucket)
+
+    new_bucket.Versioning().enable()
+    s3.BucketTagging(bucket_name=bucket).put(Tagging={
+        'TagSet':
+            [
+                {
+                    'Key': 'Creator',
+                    'Value': 'web-sync'
+                }
+            ]
+        } 
+    )
 
 
     new_bucket.upload_file('index.html', 'index.html', ExtraArgs={'ContentType': 'text/html'})

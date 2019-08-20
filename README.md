@@ -13,3 +13,4 @@ Websync has the following features:
 - List buckets
 - List bucket contents
 - Create bucket and configure static website
+- Enables/Disables file versioning on bucket
