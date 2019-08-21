@@ -66,7 +66,7 @@ def setup_bucket(bucket):
     )
 
 
-    new_bucket.upload_file('index.html', 'index.html', ExtraArgs={'ContentType': 'text/html'})
+    # new_bucket.upload_file('index.html', 'index.html', ExtraArgs={'ContentType': 'text/html'})
     policy = """
         {
             "Version": "2012-10-17",
@@ -116,7 +116,7 @@ def Sync(pathname, bucket):
     "Sync contents of pathname to s3 bucket"
     root = Path(pathname).expanduser().resolve()
     s3_bucket = s3.Bucket(bucket)
-    # results = []
+
     def handle_dir(pathname):
         path = Path(pathname)
         for each in path.iterdir():
@@ -126,8 +126,7 @@ def Sync(pathname, bucket):
                 print("Uploading file {} to {} bucket.".format(each.relative_to(root).as_posix(),s3_bucket.name))
                 file_upload(s3_bucket, str(each), str(each.relative_to(root).as_posix()))
     handle_dir(root)
-# Sync('website','aws-python-tools')
-        # print( results )
+
     #url = "https://%s.s3-website.%s.amazonaws.com" % (bucket.name, session.region_name)
 if __name__ =='__main__':
     cli()
