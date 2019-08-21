@@ -1,7 +1,8 @@
 import boto3
-import sys
 import click
 from botocore.exceptions import ClientError
+from pathlib import Path
+import mimetypes
 
 #Selects profile from ~/.aws/config
 session = boto3.Session(profile_name='awstools')
@@ -98,6 +99,35 @@ def setup_bucket(bucket):
         }
     )
     return 
+def file_upload(s3_bucket, path, key):
+    s3_bucket.upload_file(
+        path,
+        key,
+        ExtraArgs={
+            'ContentType': mimetypes.guess_type(key)[0] or 'text/plain'
+        }
+    )
+
+@cli.command('sync')
+@click.argument('pathname', type=click.Path(exists=True))
+@click.argument('bucket')
+
+def Sync(pathname, bucket):
+    "Sync contents of pathname to s3 bucket"
+    root = Path(pathname).expanduser().resolve()
+    s3_bucket = s3.Bucket(bucket)
+    # results = []
+    def handle_dir(pathname):
+        path = Path(pathname)
+        for each in path.iterdir():
+            if each.is_dir():
+                handle_dir(each)
+            else:
+                print("Uploading file {} to {} bucket.".format(each.relative_to(root).as_posix(),s3_bucket.name))
+                file_upload(s3_bucket, str(each), str(each.relative_to(root).as_posix()))
+    handle_dir(root)
+# Sync('website','aws-python-tools')
+        # print( results )
     #url = "https://%s.s3-website.%s.amazonaws.com" % (bucket.name, session.region_name)
 if __name__ =='__main__':
     cli()
