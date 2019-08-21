@@ -10,7 +10,8 @@ Websync is a program that wil sync a local directory to an s3 bucket and can con
 
 Websync has the following features:
 
-- List buckets
-- List bucket contents
-- Create bucket and configure static website
-- Enables/Disables file versioning on bucket
+- List buckets.
+- List bucket contents.
+- Create bucket and configure static website.
+- Enables/Disables file versioning on bucket.
+- Syncs directory and subdirectories to S3 bucket.
