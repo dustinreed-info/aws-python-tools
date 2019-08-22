@@ -5,8 +5,10 @@
 
 - Configures AWS S3 Buckets
     - Creates bucket
+    - Enables/Suspends s3 bucket versioning
     - Sets bucket up for static website hosting
     - Syncs local files to s3 Bucket
+    - Add/Remove tag to s3 bucket
 - Configures DNS with AWS Route 53
 - Configures AWS CloudFront CDN
 """
@@ -16,10 +18,14 @@ import mimetypes
 import click
 import boto3
 from botocore.exceptions import ClientError
+from s3bucket import BucketManager
+
 
 # Selects profile from ~/.aws/config
 session = boto3.Session(profile_name='awstools')
-s3 = session.resource('s3')
+# s3 = session.resource('s3')
+
+bucket_manager = BucketManager(session)
 
 
 @click.group()
@@ -31,7 +37,7 @@ def cli():
 @cli.command('list-buckets')
 def list_buckets():
     """Lists all S3 Buckets."""
-    for b in s3.buckets.all():
+    for b in bucket_manager.all_buckets():
         print(b.name)
 
 
@@ -39,85 +45,57 @@ def list_buckets():
 @click.argument('bucket')
 def list_bucket_objects(bucket):
     """List objects in an s3 bucket."""
-    for obj in s3.Bucket(bucket).objects.all():
-        print(obj)
+    for obj in bucket_manager.all_objects(bucket):
+        print(obj.key)
 
 
 @cli.command('enable-versions')
 @click.argument('bucket')
 def enable_bucket_versioning(bucket):
     """Keep multiple versions of an object in the same bucket."""
-    bucket = s3.Bucket(bucket)
-    bucket.Versioning().enable()
+    # bucket = bucket_manager.s3.Bucket(bucket)
+    # bucket.Versioning().enable()
+    bucket_manager.set_bucket_versioning(bucket)
 
 
 @cli.command('disable-versions')
 @click.argument('bucket')
 def disable_bucket_versioning(bucket):
     """Disables multiple versions of an object in the same bucket."""
-    bucket = s3.Bucket(bucket)
-    bucket.Versioning().suspend()
+    # bucket = bucket_manager.s3.Bucket(bucket)
+    # bucket.Versioning().suspend()
+    bucket_manager.suspend_bucket_versioning(bucket)
 
+@cli.command('list-bucket-tags')
+@click.argument('bucket')
+def list_bucket_tags(bucket):
+    """Lists tags for specified s3 bucket."""
+    bucket_manager.list_bucket_tags(bucket)
+@cli.command('tag-bucket')
+@click.argument('bucket')
+@click.argument('tagkey')
+@click.argument('tagvalue')
+def tag_bucket(bucket, tagkey, tagvalue):
+    """Tags specified s3 bucket."""
+    bucket_manager.set_bucket_tag(bucket, tagkey, tagvalue)
+
+@cli.command('untag-bucket')
+@click.argument('bucket')
+@click.argument('tagkey')
+@click.argument('tagvalue', required=False)
+def untag_bucket(bucket, tagkey, tagvalue=None):
+    """Removes tag from s3 bucket."""
+    bucket_manager.remove_bucket_tag(bucket, tagkey, tagvalue)
 
 @cli.command('setup-bucket')
 @click.argument('bucket')
 def setup_bucket(bucket):
     """Creates and configures an s3 bucket."""
-    new_bucket = None
-    try:
-        new_bucket = s3.create_bucket(
-            Bucket=bucket,
-            CreateBucketConfiguration={
-                'LocationConstraint': session.region_name
-            }
-        )
-    except ClientError as e:
-        if e.response['Error']['Code'] == 'InvalidLocationConstraint':
-            new_bucket = s3.create_bucket(Bucket=bucket)
-        else:
-            new_bucket = s3.Bucket(bucket)
-
-    new_bucket.Versioning().enable()
-    s3.BucketTagging(bucket_name=bucket).put(Tagging={
-        'TagSet':
-            [
-                {
-                    'Key': 'Creator',
-                    'Value': 'web-sync'
-                }
-            ]
-        }
-    )
-
-    policy = """
-        {
-            "Version": "2012-10-17",
-            "Id": "Policy1566251860285",
-            "Statement": [
-                {
-                    "Sid": "Stmt1566251838784",
-                    "Effect": "Allow",
-                    "Principal": "*",
-                    "Action": "s3:GetObject",
-                    "Resource": "arn:aws:s3:::%s/*.html"
-                }
-            ]
-        }
-        """ % new_bucket.name
-    policy = policy.strip()
-    pol = new_bucket.Policy()
-    pol.put(Policy=policy)
-    ws = new_bucket.Website()
-    ws.put(WebsiteConfiguration={
-        'ErrorDocument': {
-            'Key': 'error.html'
-            },
-        'IndexDocument': {
-            'Suffix': 'index.html'
-            }
-        }
-    )
-    return
+    bucket_manager.create_bucket(bucket)
+    bucket_manager.set_bucket_versioning(bucket)
+    bucket_manager.set_bucket_tag(bucket)
+    bucket_manager.set_bucket_policy(bucket)
+    bucket_manager.set_bucket_website(bucket)
 
 
 def file_upload(s3_bucket, path, key):
@@ -136,7 +114,7 @@ def file_upload(s3_bucket, path, key):
 def Sync(pathname, bucket):
     """Sync contents of pathname to s3 bucket."""
     root = Path(pathname).expanduser().resolve()
-    s3_bucket = s3.Bucket(bucket)
+    s3_bucket = bucket_manager.s3.Bucket(bucket)
 
     def handle_dir(pathname):
         """ Uploads directory and sub directories to s3 bucket."""
@@ -155,6 +133,7 @@ def Sync(pathname, bucket):
                     str(each.relative_to(root).as_posix())
                 )
     handle_dir(root)
+
 
 if __name__ == '__main__':
     cli()
