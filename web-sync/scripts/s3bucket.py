@@ -40,9 +40,14 @@ class BucketManager:
                 self.new_bucket = self.s3.Bucket(bucket_name)
         return self.new_bucket
 
-    def suspend_bucket_versioning(self, bucket_name):
-        """Suspends bucket versioning."""
-        self.s3.Bucket(bucket_name).Versioning().delete()
+    def file_upload(self, bucket_name, path, key):
+        self.s3.Bucket(bucket_name).upload_file(
+            path,
+            key,
+            ExtraArgs={
+                'ContentType': mimetypes.guess_type(key)[0] or 'text/plain'
+            }
+        )
 
     def list_bucket_tags(self, bucket_name):
         """Lists all tags for a specified bucket"""
@@ -90,21 +95,6 @@ class BucketManager:
         pol = self.s3.Bucket(bucket_name).Policy()
         pol.put(Policy=policy)
 
-    def set_bucket_versioning(self, bucket_name):
-        """Enables multiple versions of an object in the same bucket."""
-        self.s3.Bucket(bucket_name).Versioning().enable()
-
-    def set_bucket_website(self, bucket_name):
-        """Configures a static website from s3 bucket.
-        Index.html
-        Error.html"""
-        website = self.s3.Bucket(bucket_name).Website()
-        website.put(WebsiteConfiguration={
-            'ErrorDocument': {'Key': 'error.html'},
-            'IndexDocument': {'Suffix': 'index.html'}
-            }
-        )
-
     def set_bucket_tag(self, bucket_name, key='Creator', value='Web-Sync'):
         """Tags specified s3 bucket"""
         new_tags = []
@@ -126,14 +116,24 @@ class BucketManager:
             }
         )
 
-    def file_upload(self, bucket_name, path, key):
-        self.s3.Bucket(bucket_name).upload_file(
-            path,
-            key,
-            ExtraArgs={
-                'ContentType': mimetypes.guess_type(key)[0] or 'text/plain'
+    def set_bucket_versioning(self, bucket_name):
+        """Enables multiple versions of an object in the same bucket."""
+        self.s3.Bucket(bucket_name).Versioning().enable()
+
+    def set_bucket_website(self, bucket_name):
+        """Configures a static website from s3 bucket.
+        Index.html
+        Error.html"""
+        website = self.s3.Bucket(bucket_name).Website()
+        website.put(WebsiteConfiguration={
+            'ErrorDocument': {'Key': 'error.html'},
+            'IndexDocument': {'Suffix': 'index.html'}
             }
         )
+
+    def suspend_bucket_versioning(self, bucket_name):
+        """Suspends bucket versioning."""
+        self.s3.Bucket(bucket_name).Versioning().delete()
 
     def sync_bucket(self, pathname, bucket):
         """Sync contents of pathname to s3 bucket."""
