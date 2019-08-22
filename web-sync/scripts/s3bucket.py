@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 
 
 class BucketManager:
-    """Manages an S3 Bucket."""
+    """Methods to manage S3 buckets."""
     def __init__(self, session):
         self.s3 = session.resource('s3')
         self.session = boto3.Session(profile_name='awstools')
@@ -50,7 +50,7 @@ class BucketManager:
         )
 
     def list_bucket_tags(self, bucket_name):
-        """Lists all tags for a specified bucket"""
+        """Lists all tags for a specified bucket."""
         try:
             for t in self.s3.BucketTagging(bucket_name=bucket_name).tag_set:
                 print(f"{t['Key']}: {t['Value']}")
@@ -58,7 +58,7 @@ class BucketManager:
             print(f'{bucket_name} does not have any tags set.')
 
     def remove_bucket_tag(self, bucket_name, key, value):
-        """ Removes tag from specified s3 bucket"""
+        """Removes tag from specified s3 bucket."""
         new_tags = []
         try:
             tag = self.s3.BucketTagging(bucket_name=bucket_name).tag_set

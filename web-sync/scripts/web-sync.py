@@ -18,19 +18,20 @@ import click
 import boto3
 from botocore.exceptions import ClientError
 from s3bucket import BucketManager
+from session import SessionConfig
 
 
-# Selects profile from ~/.aws/config
-session = boto3.Session(profile_name='awstools')
-# s3 = session.resource('s3')
 
-bucket_manager = BucketManager(session)
-
+# bucket_manager = None
 
 @click.group()
-def cli():
+@click.option('--profile', default=None, help='Selects an AWS profile.' )
+def cli(profile):
     """Web Sync deploys websites to AWS."""
-    pass
+    global bucket_manager
+    boto_session = SessionConfig(profile)
+    bucket_manager = BucketManager(boto_session.session)
+
 
 
 @cli.command('list-buckets')
@@ -52,8 +53,6 @@ def list_bucket_objects(bucket):
 @click.argument('bucket')
 def enable_bucket_versioning(bucket):
     """Keep multiple versions of an object in the same bucket."""
-    # bucket = bucket_manager.s3.Bucket(bucket)
-    # bucket.Versioning().enable()
     bucket_manager.set_bucket_versioning(bucket)
 
 
@@ -61,8 +60,6 @@ def enable_bucket_versioning(bucket):
 @click.argument('bucket')
 def disable_bucket_versioning(bucket):
     """Disables multiple versions of an object in the same bucket."""
-    # bucket = bucket_manager.s3.Bucket(bucket)
-    # bucket.Versioning().suspend()
     bucket_manager.suspend_bucket_versioning(bucket)
 
 

@@ -14,4 +14,5 @@ Websync has the following features:
 - List bucket contents.
 - Create bucket and configure static website.
 - Enables/Disables file versioning on bucket.
+- Sets AWS Profile with --profile=<ProfileName>
 - Syncs directory and subdirectories to S3 bucket.
