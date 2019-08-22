@@ -65,11 +65,14 @@ def disable_bucket_versioning(bucket):
     # bucket.Versioning().suspend()
     bucket_manager.suspend_bucket_versioning(bucket)
 
+
 @cli.command('list-bucket-tags')
 @click.argument('bucket')
 def list_bucket_tags(bucket):
     """Lists tags for specified s3 bucket."""
     bucket_manager.list_bucket_tags(bucket)
+
+
 @cli.command('tag-bucket')
 @click.argument('bucket')
 @click.argument('tagkey')
@@ -78,6 +81,7 @@ def tag_bucket(bucket, tagkey, tagvalue):
     """Tags specified s3 bucket."""
     bucket_manager.set_bucket_tag(bucket, tagkey, tagvalue)
 
+
 @cli.command('untag-bucket')
 @click.argument('bucket')
 @click.argument('tagkey')
@@ -85,6 +89,7 @@ def tag_bucket(bucket, tagkey, tagvalue):
 def untag_bucket(bucket, tagkey, tagvalue=None):
     """Removes tag from s3 bucket."""
     bucket_manager.remove_bucket_tag(bucket, tagkey, tagvalue)
+
 
 @cli.command('setup-bucket')
 @click.argument('bucket')
@@ -96,12 +101,14 @@ def setup_bucket(bucket):
     bucket_manager.set_bucket_policy(bucket)
     bucket_manager.set_bucket_website(bucket)
 
+
 @cli.command('sync')
 @click.argument('pathname', type=click.Path(exists=True))
 @click.argument('bucket')
 def sync(pathname, bucket):
     """Syncs directory and subdirectories to specified s3 bucket"""
     bucket_manager.sync_bucket(pathname, bucket)
+
 
 if __name__ == '__main__':
     cli()
