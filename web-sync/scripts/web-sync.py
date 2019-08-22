@@ -14,7 +14,6 @@
 """
 
 from pathlib import Path
-import mimetypes
 import click
 import boto3
 from botocore.exceptions import ClientError
@@ -97,43 +96,12 @@ def setup_bucket(bucket):
     bucket_manager.set_bucket_policy(bucket)
     bucket_manager.set_bucket_website(bucket)
 
-
-def file_upload(s3_bucket, path, key):
-    s3_bucket.upload_file(
-        path,
-        key,
-        ExtraArgs={
-            'ContentType': mimetypes.guess_type(key)[0] or 'text/plain'
-        }
-    )
-
-
 @cli.command('sync')
 @click.argument('pathname', type=click.Path(exists=True))
 @click.argument('bucket')
-def Sync(pathname, bucket):
-    """Sync contents of pathname to s3 bucket."""
-    root = Path(pathname).expanduser().resolve()
-    s3_bucket = bucket_manager.s3.Bucket(bucket)
-
-    def handle_dir(pathname):
-        """ Uploads directory and sub directories to s3 bucket."""
-        path = Path(pathname)
-        for each in path.iterdir():
-            if each.is_dir():
-                handle_dir(each)
-            else:
-                print("Uploading file {} to {} bucket.".format(
-                    each.relative_to(root).as_posix(), s3_bucket.name
-                    )
-                )
-                file_upload(
-                    s3_bucket,
-                    str(each),
-                    str(each.relative_to(root).as_posix())
-                )
-    handle_dir(root)
-
+def sync(pathname, bucket):
+    """Syncs directory and subdirectories to specified s3 bucket"""
+    bucket_manager.sync_bucket(pathname, bucket)
 
 if __name__ == '__main__':
     cli()

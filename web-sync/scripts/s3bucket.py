@@ -3,6 +3,8 @@
 
 """Classes to manage S3 Buckets."""
 
+from pathlib import Path
+import mimetypes
 import boto3
 from botocore.exceptions import ClientError
 
@@ -42,7 +44,6 @@ class BucketManager:
         """Suspends bucket versioning."""
         self.s3.Bucket(bucket_name).Versioning().delete()
 
-    
     def list_bucket_tags(self, bucket_name):
         """Lists all tags for a specified bucket"""
         try:
@@ -114,15 +115,47 @@ class BucketManager:
                     print(f'Tag was {key}: {t["Value"]} \nTag updated to {key}: {value}')
                 else:
                     new_tags.append(t)
-            new_tags.append({'Key': key, 'Value': value})    
-        except: 
+            new_tags.append({'Key': key, 'Value': value})
+        except:
             print(f'Setting bucket tag to {key}: {value}')
             new_tags.append({'Key': key, 'Value': value})
-        
         self.s3.BucketTagging(bucket_name=bucket_name).put(Tagging={
             'TagSet': new_tags
             }
-        )  
+        )
+
+    def file_upload(self, bucket_name, path, key):
+        self.s3.Bucket(bucket_name).upload_file(
+            path,
+            key,
+            ExtraArgs={
+                'ContentType': mimetypes.guess_type(key)[0] or 'text/plain'
+            }
+        )
+
+    def sync_bucket(self, pathname, bucket):
+        """Sync contents of pathname to s3 bucket."""
+        root = Path(pathname).expanduser().resolve()
+        s3_bucket = self.s3.Bucket(bucket)
+
+        def handle_dir(pathname):
+            """ Uploads directory and sub directories to s3 bucket."""
+            path = Path(pathname)
+            for each in path.iterdir():
+                if each.is_dir():
+                    handle_dir(each)
+                else:
+                    print("Uploading file {} to {} bucket.".format(
+                        each.relative_to(root).as_posix(), s3_bucket.name
+                        )
+                    )
+                    self.file_upload(
+                        s3_bucket.name,
+                        str(each),
+                        str(each.relative_to(root).as_posix())
+                    )
+        handle_dir(root)
+
 
 # session = boto3.Session(profile_name='awstools')
 # a = BucketManager(session)
