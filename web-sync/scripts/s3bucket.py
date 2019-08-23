@@ -6,6 +6,7 @@
 from pathlib import Path
 import mimetypes
 import boto3
+import utils
 from botocore.exceptions import ClientError
 
 
@@ -49,7 +50,17 @@ class BucketManager:
             }
         )
 
-    def list_bucket_tags(self, bucket_name):
+    def get_bucket_region(self, bucket):
+        """Returns the bucket's region name."""
+        return self.s3.meta.client.get_bucket_location(
+            Bucket=bucket)['LocationConstraint'] or 'us-east-1'
+
+    def get_bucket_url(self, bucket):
+        """Returns url for s3 website endpoint"""
+        return 'http://{}.{}'.format(
+            bucket, utils.get_site(self.get_bucket_region(bucket)))
+
+    def get_bucket_tags(self, bucket_name):
         """Lists all tags for a specified bucket."""
         try:
             for t in self.s3.BucketTagging(bucket_name=bucket_name).tag_set:
@@ -157,7 +168,6 @@ class BucketManager:
                         str(each.relative_to(root).as_posix())
                     )
         handle_dir(root)
-
 
 # session = boto3.Session(profile_name='awstools')
 # a = BucketManager(session)

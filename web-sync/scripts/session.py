@@ -1,5 +1,9 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import boto3
 from s3bucket import BucketManager
+
 
 class SessionConfig:
     """Creates SessionConfig object"""
@@ -8,5 +12,3 @@ class SessionConfig:
         if profile:
             self.session_cfg['profile_name'] = profile
         self.session = boto3.Session(**self.session_cfg)
-    
-

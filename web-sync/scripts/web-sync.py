@@ -20,18 +20,16 @@ from botocore.exceptions import ClientError
 from s3bucket import BucketManager
 from session import SessionConfig
 
+bucket_manager = None
 
-
-# bucket_manager = None
 
 @click.group()
-@click.option('--profile', default=None, help='Selects an AWS profile.' )
+@click.option('--profile', default=None, help='Selects an AWS profile.')
 def cli(profile):
     """Web Sync deploys websites to AWS."""
     global bucket_manager
     boto_session = SessionConfig(profile)
     bucket_manager = BucketManager(boto_session.session)
-
 
 
 @cli.command('list-buckets')
@@ -105,6 +103,7 @@ def setup_bucket(bucket):
 def sync(pathname, bucket):
     """Syncs directory and subdirectories to specified s3 bucket"""
     bucket_manager.sync_bucket(pathname, bucket)
+    print('Static website URL: ', bucket_manager.get_bucket_url(bucket))
 
 
 if __name__ == '__main__':
