@@ -7,14 +7,25 @@ from pathlib import Path
 import mimetypes
 import boto3
 import utils
+from functools import reduce
+from hashlib import md5
 from botocore.exceptions import ClientError
 
 
 class BucketManager:
     """Methods to manage S3 buckets."""
+
+    CHUNK_SIZE = 8388608
+
     def __init__(self, session):
         self.s3 = session.resource('s3')
         self.session = boto3.Session(profile_name='awstools')
+        self.transfer_config = boto3.s3.transfer.TransferConfig(
+            multipart_chunksize=self.CHUNK_SIZE,
+            multipart_threshold=self.CHUNK_SIZE
+        )
+        self.manifest = {}
+        self.local_files = []
 
     def all_buckets(self):
         """Gets an iterator for all s3 buckets."""
@@ -42,12 +53,19 @@ class BucketManager:
         return self.new_bucket
 
     def file_upload(self, bucket_name, path, key):
+        """Uploads file to s3 bucket at key."""
+        etag = self.get_file_etag(path)
+        if self.manifest.get(key, '') == etag:
+            print('Skipping', key, 'already exists in', bucket_name )
+            return
+        print(f'Uploading {key} to {bucket_name} bucket.')
         self.s3.Bucket(bucket_name).upload_file(
             path,
             key,
             ExtraArgs={
                 'ContentType': mimetypes.guess_type(key)[0] or 'text/plain'
-            }
+            },
+            Config=self.transfer_config
         )
 
     def get_bucket_region(self, bucket):
@@ -67,7 +85,7 @@ class BucketManager:
                 print(f"{t['Key']}: {t['Value']}")
         except:
             print(f'{bucket_name} does not have any tags set.')
-
+    
     def remove_bucket_tag(self, bucket_name, key, value):
         """Removes tag from specified s3 bucket."""
         new_tags = []
@@ -142,6 +160,42 @@ class BucketManager:
             }
         )
 
+    def set_bucket_manifest(self, bucket):
+        """Loads manifest for caching purposes."""
+        paginator = self.s3.meta.client.get_paginator('list_objects_v2')
+        for page in paginator.paginate(Bucket=bucket):
+            for obj in page.get('Contents', []):
+                self.manifest[obj['Key']] = obj['ETag']
+
+    @staticmethod
+    def get_data_hash(data):
+        """Generate md5 hash for data"""
+        hash = md5()
+        hash.update(data)
+        return hash
+    
+    def get_file_etag(self, filepath):
+        """Gets etag for a file."""
+        hashes = []
+        with  open(filepath, 'rb') as f:
+            while True:
+                data = f.read(self.CHUNK_SIZE)
+                if not data:
+                    break
+                
+                hashes.append(self.get_data_hash(data))
+        if not hashes:
+            return
+        elif len(hashes) == 1:
+            return '"{}"'.format(hashes[0].hexdigest())
+        else:
+            hash = self.get_data_hash(reduce(lambda x,y: x + y, (h.digest() for h in hashes)))
+        
+            return '"{}-{}"'.format(hash.hexdigest(), len(hashes))
+            
+            
+            
+
     def suspend_bucket_versioning(self, bucket_name):
         """Suspends bucket versioning."""
         self.s3.Bucket(bucket_name).Versioning().delete()
@@ -150,6 +204,7 @@ class BucketManager:
         """Sync contents of pathname to s3 bucket."""
         root = Path(pathname).expanduser().resolve()
         s3_bucket = self.s3.Bucket(bucket)
+        self.set_bucket_manifest(bucket)
 
         def handle_dir(pathname):
             """ Uploads directory and sub directories to s3 bucket."""
@@ -158,16 +213,39 @@ class BucketManager:
                 if each.is_dir():
                     handle_dir(each)
                 else:
-                    print("Uploading file {} to {} bucket.".format(
-                        each.relative_to(root).as_posix(), s3_bucket.name
-                        )
-                    )
+                    # print("Uploading file {} to {} bucket.".format(
+                    #     each.relative_to(root).as_posix(), s3_bucket.name
+                    #     )
+                    # )
+                    self.local_files.append(str(each.relative_to(root).as_posix()))
                     self.file_upload(
                         s3_bucket.name,
                         str(each),
                         str(each.relative_to(root).as_posix())
                     )
         handle_dir(root)
+        del_list = []
+        
+        for file in self.local_files:
+            try:
+                del(self.manifest[file])
+            except KeyError:
+                #File does not exist in manifest.
+                pass
+        for k in self.manifest.keys():
+            del_list.append(
+                {'Key': k},
+                )
+        [print(f'Removing {file["Key"]} from {bucket}') for file in del_list]
+        try:
+            s3_bucket.delete_objects(
+                Delete={
+                    'Objects': del_list
+                }
+            )
+        except:
+            print('It does not appear that any files need to be removed.')
+
 
 # session = boto3.Session(profile_name='awstools')
 # a = BucketManager(session)
