@@ -18,18 +18,22 @@ import click
 import boto3
 from botocore.exceptions import ClientError
 from s3bucket import BucketManager
+from dns import DNS_Manager
 from session import SessionConfig
+import utils
 
 bucket_manager = None
+dns_manager = None
 
 
 @click.group()
 @click.option('--profile', default=None, help='Selects an AWS profile.')
 def cli(profile):
     """Web Sync deploys websites to AWS."""
-    global bucket_manager
+    global bucket_manager, dns_manager
     boto_session = SessionConfig(profile)
     bucket_manager = BucketManager(boto_session.session)
+    dns_manager = DNS_Manager(boto_session.session)
 
 
 @cli.command('list-buckets')
@@ -104,6 +108,21 @@ def sync(pathname, bucket):
     """Syncs directory and subdirectories to specified s3 bucket"""
     bucket_manager.sync_bucket(pathname, bucket)
     print('Static website URL: ', bucket_manager.get_bucket_url(bucket))
+
+
+@cli.command('setup-dns')
+@click.argument('domain')
+def setup_dns(domain):
+    """Creates DNS Alias Record to point to static s3 bucket hosting website"""
+    bucket = bucket_manager.get_bucket_name(domain)
+    zone = dns_manager.get_hosted_zone(domain) \
+        or dns_manager.create_hosted_zone(domain)
+    endpoint = utils.get_endpoint(bucket_manager.get_bucket_region(bucket))
+    a_record = dns_manager.create_s3_dns_record(
+        zone,
+        domain,
+        endpoint)
+    print(f"Domain configured: http://{domain}")
 
 
 if __name__ == '__main__':

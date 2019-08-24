@@ -18,8 +18,10 @@ class BucketManager:
     CHUNK_SIZE = 8388608
 
     def __init__(self, session):
-        self.s3 = session.resource('s3')
-        self.session = boto3.Session(profile_name='awstools')
+        self.session = session
+        self.s3 = self.session.resource('s3')
+        # self.session = boto3.Session(profile_name='awstools')
+
         self.transfer_config = boto3.s3.transfer.TransferConfig(
             multipart_chunksize=self.CHUNK_SIZE,
             multipart_threshold=self.CHUNK_SIZE
@@ -56,7 +58,7 @@ class BucketManager:
         """Uploads file to s3 bucket at key."""
         etag = self.get_file_etag(path)
         if self.manifest.get(key, '') == etag:
-            print('Skipping', key, 'already exists in', bucket_name )
+            print('Skipping', key, 'already exists in', bucket_name)
             return
         print(f'Uploading {key} to {bucket_name} bucket.')
         self.s3.Bucket(bucket_name).upload_file(
@@ -67,6 +69,10 @@ class BucketManager:
             },
             Config=self.transfer_config
         )
+
+    def get_bucket_name(self, bucket):
+        """Returns the buckets name"""
+        return self.s3.Bucket(bucket).name
 
     def get_bucket_region(self, bucket):
         """Returns the bucket's region name."""
@@ -85,7 +91,7 @@ class BucketManager:
                 print(f"{t['Key']}: {t['Value']}")
         except:
             print(f'{bucket_name} does not have any tags set.')
-    
+
     def remove_bucket_tag(self, bucket_name, key, value):
         """Removes tag from specified s3 bucket."""
         new_tags = []
@@ -173,28 +179,27 @@ class BucketManager:
         hash = md5()
         hash.update(data)
         return hash
-    
+
     def get_file_etag(self, filepath):
         """Gets etag for a file."""
         hashes = []
-        with  open(filepath, 'rb') as f:
+        with open(filepath, 'rb') as f:
             while True:
                 data = f.read(self.CHUNK_SIZE)
                 if not data:
                     break
-                
+
                 hashes.append(self.get_data_hash(data))
         if not hashes:
             return
         elif len(hashes) == 1:
             return '"{}"'.format(hashes[0].hexdigest())
         else:
-            hash = self.get_data_hash(reduce(lambda x,y: x + y, (h.digest() for h in hashes)))
-        
+            hash = self.get_data_hash(
+                reduce(lambda x, y: x + y, (h.digest() for h in hashes))
+                )
+
             return '"{}-{}"'.format(hash.hexdigest(), len(hashes))
-            
-            
-            
 
     def suspend_bucket_versioning(self, bucket_name):
         """Suspends bucket versioning."""
@@ -225,12 +230,12 @@ class BucketManager:
                     )
         handle_dir(root)
         del_list = []
-        
+
         for file in self.local_files:
             try:
                 del(self.manifest[file])
             except KeyError:
-                #File does not exist in manifest.
+                # File does not exist in manifest.
                 pass
         for k in self.manifest.keys():
             del_list.append(

@@ -5,8 +5,10 @@ import boto3
 from s3bucket import BucketManager
 
 
-class SessionConfig:
-    """Creates SessionConfig object"""
+class SessionConfig(object):
+    """Creates a SessionConfig object
+    test
+    """
     def __init__(self, profile):
         self.session_cfg = {}
         if profile:

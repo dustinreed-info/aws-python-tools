@@ -39,3 +39,12 @@ def get_site(region):
         return region_to_endpoint[region].site
     else:
         print('Invalid region entered.')
+
+
+def get_endpoint(region):
+    """Returns s3 website endpoint."""
+    if region_check(region):
+        print('REGION TO ENDPOINT:', region_to_endpoint[region].dnszone)
+        return region_to_endpoint[region]
+    else:
+        print('Invalid region entered.')
