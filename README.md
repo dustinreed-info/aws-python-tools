@@ -8,7 +8,7 @@ Web-sync is a program that wil sync a local directory to an s3 bucket and can co
 
 ### Features
 
-Websync has the following features:
+Web-sync has the following features:
 
 - Adds/Removes tags from bucket.
 - Create bucket and configure static website.
@@ -18,3 +18,12 @@ Websync has the following features:
 - List bucket contents.
 - Sets AWS Profile with --profile=<ProfileName>
 - Syncs directory and subdirectories to S3 bucket.
+
+### Requirements
+
+Web-sync requires the following:
+
+- AWS User with permissions to create s3 Buckets, DNS Zones/Records, and Cloudfront.
+- AWS CLI installed.
+- AWS profile configured with credentials.  If you AWS CLI Installed you can configure profile with:
+    $ aws configure --profile "profile-name"
