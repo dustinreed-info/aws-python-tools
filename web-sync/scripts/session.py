@@ -14,3 +14,4 @@ class SessionConfig(object):
         if profile:
             self.session_cfg['profile_name'] = profile
         self.session = boto3.Session(**self.session_cfg)
+

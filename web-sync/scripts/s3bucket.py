@@ -79,11 +79,6 @@ class BucketManager:
         return self.s3.meta.client.get_bucket_location(
             Bucket=bucket)['LocationConstraint'] or 'us-east-1'
 
-    def get_bucket_url(self, bucket):
-        """Returns url for s3 website endpoint"""
-        return 'http://{}.{}'.format(
-            bucket, utils.get_site(self.get_bucket_region(bucket)))
-
     def get_bucket_tags(self, bucket_name):
         """Lists all tags for a specified bucket."""
         try:
@@ -91,6 +86,38 @@ class BucketManager:
                 print(f"{t['Key']}: {t['Value']}")
         except:
             print(f'{bucket_name} does not have any tags set.')
+
+    def get_bucket_url(self, bucket):
+        """Returns url for s3 website endpoint"""
+        return 'http://{}.{}'.format(
+            bucket, utils.get_site(self.get_bucket_region(bucket)))
+
+    def get_data_hash(data):
+        """Generate md5 hash for data"""
+        hash = md5()
+        hash.update(data)
+        return hash
+
+    def get_file_etag(self, filepath):
+        """Gets etag for a file."""
+        hashes = []
+        with open(filepath, 'rb') as f:
+            while True:
+                data = f.read(self.CHUNK_SIZE)
+                if not data:
+                    break
+
+                hashes.append(self.get_data_hash(data))
+        if not hashes:
+            return
+        elif len(hashes) == 1:
+            return '"{}"'.format(hashes[0].hexdigest())
+        else:
+            hash = self.get_data_hash(
+                reduce(lambda x, y: x + y, (h.digest() for h in hashes))
+                )
+
+            return '"{}-{}"'.format(hash.hexdigest(), len(hashes))
 
     def remove_bucket_tag(self, bucket_name, key, value):
         """Removes tag from specified s3 bucket."""
@@ -151,6 +178,13 @@ class BucketManager:
             }
         )
 
+    def set_bucket_manifest(self, bucket):
+        """Loads manifest for caching purposes."""
+        paginator = self.s3.meta.client.get_paginator('list_objects_v2')
+        for page in paginator.paginate(Bucket=bucket):
+            for obj in page.get('Contents', []):
+                self.manifest[obj['Key']] = obj['ETag']
+
     def set_bucket_versioning(self, bucket_name):
         """Enables multiple versions of an object in the same bucket."""
         self.s3.Bucket(bucket_name).Versioning().enable()
@@ -165,41 +199,6 @@ class BucketManager:
             'IndexDocument': {'Suffix': 'index.html'}
             }
         )
-
-    def set_bucket_manifest(self, bucket):
-        """Loads manifest for caching purposes."""
-        paginator = self.s3.meta.client.get_paginator('list_objects_v2')
-        for page in paginator.paginate(Bucket=bucket):
-            for obj in page.get('Contents', []):
-                self.manifest[obj['Key']] = obj['ETag']
-
-    @staticmethod
-    def get_data_hash(data):
-        """Generate md5 hash for data"""
-        hash = md5()
-        hash.update(data)
-        return hash
-
-    def get_file_etag(self, filepath):
-        """Gets etag for a file."""
-        hashes = []
-        with open(filepath, 'rb') as f:
-            while True:
-                data = f.read(self.CHUNK_SIZE)
-                if not data:
-                    break
-
-                hashes.append(self.get_data_hash(data))
-        if not hashes:
-            return
-        elif len(hashes) == 1:
-            return '"{}"'.format(hashes[0].hexdigest())
-        else:
-            hash = self.get_data_hash(
-                reduce(lambda x, y: x + y, (h.digest() for h in hashes))
-                )
-
-            return '"{}-{}"'.format(hash.hexdigest(), len(hashes))
 
     def suspend_bucket_versioning(self, bucket_name):
         """Suspends bucket versioning."""
@@ -218,10 +217,6 @@ class BucketManager:
                 if each.is_dir():
                     handle_dir(each)
                 else:
-                    # print("Uploading file {} to {} bucket.".format(
-                    #     each.relative_to(root).as_posix(), s3_bucket.name
-                    #     )
-                    # )
                     self.local_files.append(str(each.relative_to(root).as_posix()))
                     self.file_upload(
                         s3_bucket.name,
@@ -250,10 +245,3 @@ class BucketManager:
             )
         except:
             print('It does not appear that any files need to be removed.')
-
-
-# session = boto3.Session(profile_name='awstools')
-# a = BucketManager(session)
-# # a.remove_bucket_tag('aws-python-tools45645645', 'test5','1')
-# a.tag_bucket('aws-python-tools45645645', 'test5','2')
-# a.list_bucket_tags('aws-python-tools45645645')

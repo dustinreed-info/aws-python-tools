@@ -13,13 +13,28 @@ class DNS_Manager:
         self.client = session.client('route53')
         self.session = session
 
-    def get_hosted_zone(self, domain_name):
-        paginator = self.client.get_paginator('list_hosted_zones')
-        for page in paginator.paginate():
-            for zone in page['HostedZones']:
-                if domain_name.endswith(zone['Name'][:-1]):
-                    return zone
-            return None
+    def create_cf_dns_record(self, zone, domain_name, cf_dist):
+        """Creates DNS record for CloudFront Distribution."""
+        return self.client.change_resource_record_sets(
+            HostedZoneId=zone['Id'],
+            ChangeBatch={
+                'Comment': 'Created by web-sync',
+                'Changes': [
+                    {
+                        'Action': 'UPSERT',
+                        'ResourceRecordSet': {
+                            'Name': domain_name,
+                            'Type': 'A',
+                            'AliasTarget': {
+                                'HostedZoneId': 'Z2FDTNDATAQYW2',
+                                'DNSName': cf_dist,
+                                'EvaluateTargetHealth': False
+                            }
+                        }
+                    }
+                ]
+            }
+        )
 
     def create_hosted_zone(self, domain_name):
         """Creates a hosted zone in Route53 DNS"""
@@ -30,7 +45,7 @@ class DNS_Manager:
         )
 
     def create_s3_dns_record(self, zone, domain_name, endpoint):
-        print('ZONE2:', zone)
+        """Creates DNS record for static website hosted in S3 Bucket."""
         return self.client.change_resource_record_sets(
             HostedZoneId=zone['Id'],
             ChangeBatch={
@@ -51,3 +66,11 @@ class DNS_Manager:
                 ]
             }
         )
+
+    def get_hosted_zone(self, domain_name):
+        paginator = self.client.get_paginator('list_hosted_zones')
+        for page in paginator.paginate():
+            for zone in page['HostedZones']:
+                if domain_name.endswith(zone['Name'][:-1]):
+                    return zone
+            return None

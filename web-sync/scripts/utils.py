@@ -26,11 +26,13 @@ region_to_endpoint = {
 }
 
 
-def region_check(region):
-    """Returns True if valid region"""
-    if region in region_to_endpoint:
-        return True
-    return False
+def get_endpoint(region):
+    """Returns s3 website endpoint."""
+    if region_check(region):
+        print('REGION TO ENDPOINT:', region_to_endpoint[region].dnszone)
+        return region_to_endpoint[region]
+    else:
+        print('Invalid region entered.')
 
 
 def get_site(region):
@@ -41,10 +43,8 @@ def get_site(region):
         print('Invalid region entered.')
 
 
-def get_endpoint(region):
-    """Returns s3 website endpoint."""
-    if region_check(region):
-        print('REGION TO ENDPOINT:', region_to_endpoint[region].dnszone)
-        return region_to_endpoint[region]
-    else:
-        print('Invalid region entered.')
+def region_check(region):
+    """Returns True if valid region"""
+    if region in region_to_endpoint:
+        return True
+    return False
