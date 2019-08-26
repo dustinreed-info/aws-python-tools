@@ -1,11 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import pprint
 import uuid
 import boto3
-from pprint import pprint
-from session import SessionConfig
+from scripts.session import SessionConfig
 
 
 class CloudFrontManager:
@@ -18,8 +16,8 @@ class CloudFrontManager:
         """Waits for distribution to be deployed."""
         waiter = self.client.get_waiter('distribution_deployed')
         waiter.wait(Id=dist['Id'], WaiterConfig={
-            'Delay': 20,
-            'MaxAttempts': 50
+            'Delay': 30,
+            'MaxAttempts': 75
         })
 
     def create_distribution(self, domain_name, certificate):

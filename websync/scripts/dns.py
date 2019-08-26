@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import uuid
-import utils
+from scripts import utils
 
 """Classes for AWS Route 53 DNS."""
 

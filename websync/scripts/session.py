@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import boto3
-from s3bucket import BucketManager
+from scripts.s3bucket import BucketManager
 
 
 class SessionConfig(object):
@@ -14,4 +14,3 @@ class SessionConfig(object):
         if profile:
             self.session_cfg['profile_name'] = profile
         self.session = boto3.Session(**self.session_cfg)
-

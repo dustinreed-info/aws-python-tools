@@ -6,7 +6,7 @@
 from pathlib import Path
 import mimetypes
 import boto3
-import utils
+from scripts import utils
 from functools import reduce
 from hashlib import md5
 from botocore.exceptions import ClientError
@@ -92,6 +92,7 @@ class BucketManager:
         return 'http://{}.{}'.format(
             bucket, utils.get_site(self.get_bucket_region(bucket)))
 
+    @staticmethod
     def get_data_hash(data):
         """Generate md5 hash for data"""
         hash = md5()

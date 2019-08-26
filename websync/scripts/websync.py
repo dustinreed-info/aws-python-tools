@@ -17,12 +17,12 @@ from pathlib import Path
 import click
 import boto3
 from botocore.exceptions import ClientError
-from dns import DNS_Manager
-from cert import CertificateManager
-from cloudfront import CloudFrontManager
-from s3bucket import BucketManager
-from session import SessionConfig
-import utils
+from scripts.dns import DNS_Manager
+from scripts.cert import CertificateManager
+from scripts.cloudfront import CloudFrontManager
+from scripts.s3bucket import BucketManager
+from scripts.session import SessionConfig
+from scripts import utils
 
 bucket_manager = None
 dns_manager = None
