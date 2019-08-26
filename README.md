@@ -35,9 +35,9 @@ Web-sync requires the following:
 
 ### Examples
 - websync [Option] COMMAND [ARGS]
-- websync setup-bucket <test.yourdomain.com>
-- websync sync-bucket <folder> <yourbucket>
-- websync setup-cloudfront <test.yourdomain.com> 
+- websync setup-bucket "test.yourdomain.com"
+- websync sync-bucket "folder" "yourbucket"
+- websync setup-cloudfront "test.yourdomain.com" 
 
 ### TO-DO
 - More secure bucket policy.
