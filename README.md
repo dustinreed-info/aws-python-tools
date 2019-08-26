@@ -16,7 +16,7 @@ Web-sync has the following features:
 - Enables/Disables file versioning on bucket.
 - List buckets.
 - List bucket contents.
-- Sets AWS Profile with --profile=<ProfileName>
+- Sets AWS Profile with --profile="ProfileName"
 - Syncs directory and subdirectories to S3 bucket.
 
 ### Requirements
