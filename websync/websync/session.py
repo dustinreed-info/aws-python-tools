@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import boto3
-from scripts.s3bucket import BucketManager
+from websync.s3bucket import BucketManager
 
 
 class SessionConfig(object):

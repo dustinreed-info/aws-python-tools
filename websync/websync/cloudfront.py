@@ -3,7 +3,7 @@
 
 import uuid
 import boto3
-from scripts.session import SessionConfig
+from websync.session import SessionConfig
 
 
 class CloudFrontManager:
