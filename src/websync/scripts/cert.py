@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import boto3
-from websync.session import SessionConfig
+from session import SessionConfig
 
 """Classes to manage SSL Certificates."""
 

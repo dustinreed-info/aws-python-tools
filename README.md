@@ -27,6 +27,9 @@ Web-sync requires the following:
 - AWS CLI installed.
 - AWS profile configured with credentials.  If you AWS CLI Installed you can configure profile with:
     $ aws configure --profile "profile-name"
+- S3 Bucket name must match domain name that you want to setup.  For example:
+    BucketName: "test.websitetest.net"
+    DomainName: "test.websitetest.net"
 
 ### Installation
 

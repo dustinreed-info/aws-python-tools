@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import boto3
-from websync.s3bucket import BucketManager
-
 
 class SessionConfig(object):
     """Creates a SessionConfig object

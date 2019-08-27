@@ -6,7 +6,10 @@
 from pathlib import Path
 import mimetypes
 import boto3
-from websync import utils
+import utils
+from session import SessionConfig 
+from dns import DNS_Manager
+from cloudfront import CloudFrontManager
 from functools import reduce
 from hashlib import md5
 from botocore.exceptions import ClientError
@@ -149,11 +152,47 @@ class BucketManager:
                         "Effect": "Allow",
                         "Principal": "*",
                         "Action": "s3:GetObject",
-                        "Resource": "arn:aws:s3:::%s/*.html"
+                        "Resource": [
+                            "arn:aws:s3:::%s/*.html",
+                            "arn:aws:s3:::%s/imgs/*",
+                            "arn:aws:s3:::%s/icons/*",
+                            "arn:aws:s3:::%s/css/*.css",
+                            "arn:aws:s3:::%s/public/*"
+                        ]
+
                     }
                 ]
             }
-            """ % self.s3.Bucket(bucket_name).name
+            """   # % self.s3.Bucket(bucket_name).name
+        policy = policy.replace('%s', self.s3.Bucket(bucket_name).name).strip()
+        pol = self.s3.Bucket(bucket_name).Policy()
+        pol.put(Policy=policy)
+
+    def set_cloud_front_bucket_policy(self, bucket_name, origin_access_id):
+        """Sets bucket policy for *.html to be public."""
+        oai_arn = f"arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity {origin_access_id}"
+        policy = """
+            {
+                "Version": "2012-10-17",
+                "Id": "Policy1566251860285",
+                "Statement": [
+                    {
+                        "Sid": "Stmt1566251838784",
+                        "Effect": "Allow",
+                        "Principal": {"AWS": "%(arn)s"},
+                        "Action": "s3:GetObject",
+                        "Resource": [
+                            "arn:aws:s3:::%(name)s/*.html",
+                            "arn:aws:s3:::%(name)s/imgs/*",
+                            "arn:aws:s3:::%(name)s/icons/*",
+                            "arn:aws:s3:::%(name)s/css/*.css",
+                            "arn:aws:s3:::%(name)s/public/*"
+                        ]
+
+                    }
+                ]
+            }
+            """ % {'name': self.s3.Bucket(bucket_name).name, 'arn': oai_arn}
         policy = policy.strip()
         pol = self.s3.Bucket(bucket_name).Policy()
         pol.put(Policy=policy)
@@ -246,3 +285,10 @@ class BucketManager:
             )
         except:
             print('It does not appear that any files need to be removed.')
+
+
+session = SessionConfig('awstools').session
+domain_name = 'box5.dustinreed.info'
+bucket_manager = BucketManager(session)
+# dns_manager = DNS_manager(session)
+pass

@@ -17,12 +17,19 @@ from pathlib import Path
 import click
 import boto3
 from botocore.exceptions import ClientError
-from websync.dns import DNS_Manager
-from websync.cert import CertificateManager
-from websync.cloudfront import CloudFrontManager
-from websync.s3bucket import BucketManager
-from websync.session import SessionConfig
-from websync import utils
+from dns import DNS_Manager
+from cert import CertificateManager
+from cloudfront import CloudFrontManager
+from s3bucket import BucketManager
+from session import SessionConfig
+import utils
+
+# from dns import DNS_Manager
+# from cert import CertificateManager
+# from cloudfront import CloudFrontManager
+# from s3bucket import BucketManager
+# from session import SessionConfig
+# import utils
 
 bucket_manager = None
 dns_manager = None
@@ -111,7 +118,11 @@ def setup_cloudfront(domain, bucket):
         cf_dist = cloudfront_manager.create_distribution(domain, certificate)
         print('Waiting for distribution deployment...')
         cloudfront_manager.awaiting_deployment(cf_dist)
-
+    
+    print('Setting Bucket Policy for CloudFront Origin Access ID.')
+    origin_access_id = cloudfront_manager.get_origin_access_identity(domain)
+    bucket_manager.set_cloud_front_bucket_policy(bucket, origin_access_id)
+    
     zone = dns_manager.get_hosted_zone(domain) \
         or dns_manager.create_hosted_zone(domain)
     dns_manager.create_cf_dns_record(
