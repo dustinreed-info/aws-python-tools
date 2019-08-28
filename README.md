@@ -18,8 +18,12 @@ Web-sync has the following features:
 - Enables/Disables file versioning on bucket.
 - List buckets.
 - List bucket contents.
+<<<<<<< HEAD
 - List tags for S3 bucket and CloudFront Distribution.
 - Sets AWS Profile with --profile=<ProfileName>
+=======
+- Sets AWS Profile with --profile="ProfileName"
+>>>>>>> ad7e97c04dfde87a70039d8799657c0ad83836eb
 - Syncs directory and subdirectories to S3 bucket.
     Sync-bucket will remove files from bucket that do not exist locally.
 - (Un)Tags s3 bucket and CloudFront Distributions.
