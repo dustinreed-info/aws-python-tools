@@ -3,7 +3,7 @@
 
 import uuid
 # from scripts import utils
-from scripts import utils
+import src.websync.utils
 
 """Classes for AWS Route 53 DNS."""
 

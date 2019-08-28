@@ -17,12 +17,12 @@ from pathlib import Path
 import click
 import boto3
 from botocore.exceptions import ClientError
-from scripts.dns import DNS_Manager
-from scripts.cert import CertificateManager
-from scripts.cloudfront import CloudFrontManager
-from scripts.s3bucket import BucketManager
-from scripts.session import SessionConfig
-from scripts import utils
+from src.websync.dns import DNS_Manager
+from src.websync.cert import CertificateManager
+from src.websync.cloudfront import CloudFrontManager
+from src.websync.s3bucket import BucketManager
+from src.websync.session import SessionConfig
+from src.websync import utils
 
 
 bucket_manager = None
@@ -179,6 +179,7 @@ def tag_bucket(bucket, tagkey, tagvalue):
 @click.argument('tagkey')
 @click.argument('tagvalue')
 def tag_cloud_front(domain, tagkey, tagvalue):
+    """Adds tag to CloudFront distribution matching domain name specified."""
     cloudfront_manager.set_cloud_front_tag(domain, tagkey, tagvalue)
 
 
@@ -187,6 +188,7 @@ def tag_cloud_front(domain, tagkey, tagvalue):
 @click.argument('tagkey')
 @click.argument('tagvalue', required=False)
 def tag_cloud_front(domain, tagkey, tagvalue=None):
+    """Removes Tag from CloudFront distrbution matching domain name specified."""
     cloudfront_manager.remove_cloud_front_tag(domain, tagkey, tagvalue)
 
 
