@@ -36,11 +36,14 @@ Web-sync requires the following:
     BucketName: "test.websitetest.net"
     DomainName: "test.websitetest.net"
 
+### Installation
+- pip install ./dist/Websync-0.50-py3-none-any.whl
+
 ### Examples
 - websync [Option] COMMAND [ARGS]
-- python websync.py setup-bucket "test.yourdomain.com"
-- python websync.py sync-bucket "folder" "yourbucket"
-- python websync.py setup-cloudfront "test.yourdomain.com" 
+- websync setup-bucket "test.yourdomain.com"
+- websync sync-bucket "folder" "yourbucket"
+- websync setup-cloudfront "test.yourdomain.com" 
 
 ### TO-DO
 - Option to set Cloudfront to use only North America / NA + Europe / Worldwide servers.
