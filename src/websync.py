@@ -17,19 +17,13 @@ from pathlib import Path
 import click
 import boto3
 from botocore.exceptions import ClientError
-from dns import DNS_Manager
-from cert import CertificateManager
-from cloudfront import CloudFrontManager
-from s3bucket import BucketManager
-from session import SessionConfig
-import utils
+from scripts.dns import DNS_Manager
+from scripts.cert import CertificateManager
+from scripts.cloudfront import CloudFrontManager
+from scripts.s3bucket import BucketManager
+from scripts.session import SessionConfig
+from scripts import utils
 
-# from dns import DNS_Manager
-# from cert import CertificateManager
-# from cloudfront import CloudFrontManager
-# from s3bucket import BucketManager
-# from session import SessionConfig
-# import utils
 
 bucket_manager = None
 dns_manager = None
@@ -85,6 +79,14 @@ def list_bucket_tags(bucket):
     bucket_manager.list_bucket_tags(bucket)
 
 
+@cli.command('list-cloudfront-tags')
+@click.argument('domain')
+def list_cloudfront_tags(domain):
+    """Lists tags for CloudFront Distribution
+    that matches specified domain."""
+    cloudfront_manager.get_cloud_front_tags(domain)
+
+
 @cli.command('list-buckets')
 def list_buckets():
     """Lists all S3 Buckets."""
@@ -107,7 +109,12 @@ def setup_bucket(bucket):
 @click.argument('domain')
 @click.argument('bucket')
 def setup_cloudfront(domain, bucket):
-    """Setups CloudFront."""
+    """Creates a  CloudFront Distribution.
+        Checks for SSL Certificate matching domain.
+        Checks for matching Origin Access ID and creates one if not found.
+        Sets s3 bucket policy to use OA ID.
+        Creates DNS A Alias record to point to CloudFront Distribution.
+    """
     cf_dist = cloudfront_manager.get_matching_distributions(domain)
     print(cf_dist)
     if not cf_dist:
@@ -117,12 +124,13 @@ def setup_cloudfront(domain, bucket):
             return False
         cf_dist = cloudfront_manager.create_distribution(domain, certificate)
         print('Waiting for distribution deployment...')
+        print("It can take ~30 minutes for CloudFront to fully deploy the distribution ")
         cloudfront_manager.awaiting_deployment(cf_dist)
-    
+
     print('Setting Bucket Policy for CloudFront Origin Access ID.')
     origin_access_id = cloudfront_manager.get_origin_access_identity(domain)
     bucket_manager.set_cloud_front_bucket_policy(bucket, origin_access_id)
-    
+
     zone = dns_manager.get_hosted_zone(domain) \
         or dns_manager.create_hosted_zone(domain)
     dns_manager.create_cf_dns_record(
@@ -164,6 +172,22 @@ def sync(pathname, bucket):
 def tag_bucket(bucket, tagkey, tagvalue):
     """Tags specified s3 bucket."""
     bucket_manager.set_bucket_tag(bucket, tagkey, tagvalue)
+
+
+@cli.command('tag-cloudfront')
+@click.argument('domain')
+@click.argument('tagkey')
+@click.argument('tagvalue')
+def tag_cloud_front(domain, tagkey, tagvalue):
+    cloudfront_manager.set_cloud_front_tag(domain, tagkey, tagvalue)
+
+
+@cli.command('untag-cloudfront')
+@click.argument('domain')
+@click.argument('tagkey')
+@click.argument('tagvalue', required=False)
+def tag_cloud_front(domain, tagkey, tagvalue=None):
+    cloudfront_manager.remove_cloud_front_tag(domain, tagkey, tagvalue)
 
 
 @cli.command('untag-bucket')

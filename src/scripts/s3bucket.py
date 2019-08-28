@@ -6,10 +6,7 @@
 from pathlib import Path
 import mimetypes
 import boto3
-import utils
-from session import SessionConfig 
-from dns import DNS_Manager
-from cloudfront import CloudFrontManager
+from scripts import utils
 from functools import reduce
 from hashlib import md5
 from botocore.exceptions import ClientError
@@ -285,10 +282,3 @@ class BucketManager:
             )
         except:
             print('It does not appear that any files need to be removed.')
-
-
-session = SessionConfig('awstools').session
-domain_name = 'box5.dustinreed.info'
-bucket_manager = BucketManager(session)
-# dns_manager = DNS_manager(session)
-pass

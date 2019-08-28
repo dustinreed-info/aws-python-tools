@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import boto3
-from session import SessionConfig
 
 """Classes to manage SSL Certificates."""
 

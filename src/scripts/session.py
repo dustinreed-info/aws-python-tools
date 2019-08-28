@@ -3,6 +3,7 @@
 
 import boto3
 
+
 class SessionConfig(object):
     """Creates a SessionConfig object
     test

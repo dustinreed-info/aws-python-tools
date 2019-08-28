@@ -3,7 +3,6 @@
 
 import uuid
 import boto3
-from session import SessionConfig
 # from session import SessionConfig
 
 
@@ -22,9 +21,20 @@ class CloudFrontManager:
         })
 
     def create_distribution(self, domain_name, certificate, tag_key='Creator', tag_value='Web-Sync'):
+        """Creates Cloud Front CDN Distribution.
+        First it checks if an Origin Access ID exists for a domain.
+        If one is not found it goes ahead and creates one.
+        Then it will create a CloudFront Distribution with tags
+        It sets index.html as the default root object.  If this is called
+        by websync.setup_cloudfront() it will set the bucket
+        policy for the s3 bucket that matches the specified domain name
+        so that CloudFront can distribute the necessary resources for the
+        static website.
+        """
+
         origin_id = 'S3-' + domain_name
         origin_access_id_config = self.get_origin_access_identity_config(domain_name)
-        
+
         if origin_access_id_config:
             origin_access_id = self.get_origin_access_identity(domain_name)
             print(f'Origin Access ID: {origin_access_id}')
@@ -47,9 +57,13 @@ class CloudFrontManager:
                     'Items': [
                         {
                             'Id': origin_id,
-                            'DomainName': '{}.s3.amazonaws.com'.format(domain_name),
+                            'DomainName': '{}.s3.amazonaws.com'.format(
+                                domain_name
+                                ),
                             'S3OriginConfig': {
-                                'OriginAccessIdentity': 'origin-access-identity/cloudfront/{}'.format(origin_access_id)
+                                'OriginAccessIdentity': 'origin-access-identity/cloudfront/{}'.format(
+                                    origin_access_id
+                                    )
                             }
                         }
                     ]
@@ -89,29 +103,33 @@ class CloudFrontManager:
                         }
                     ]
                 }
-            }  
+            }
         )
-
-
-
         return result['Distribution']
+
     def create_origin_access_identity(self, domain_name):
-        oai_id = self.client.create_cloud_front_origin_access_identity(CloudFrontOriginAccessIdentityConfig={
-            'CallerReference': str(uuid.uuid4()),
-            'Comment': domain_name
-            }            
+        """Creates Origin Access ID."""
+        oai_id = self.client.create_cloud_front_origin_access_identity(
+            CloudFrontOriginAccessIdentityConfig={
+                'CallerReference': str(uuid.uuid4()),
+                'Comment': domain_name
+                }
         )
         return oai_id['CloudFrontOriginAccessIdentity']['Id']
-    
+
     def get_origin_access_identity(self, domain_name):
+        """Returns Origin Access ID."""
         oai_list = self.client.list_cloud_front_origin_access_identities()['CloudFrontOriginAccessIdentityList']['Items']
         paginator = self.client.get_paginator('list_cloud_front_origin_access_identities')
         for page in paginator.paginate():
             for item in oai_list:
                 if domain_name == item['Comment']:
-                    return self.client.get_cloud_front_origin_access_identity(Id=item['Id'])['CloudFrontOriginAccessIdentity']['Id']
+                    return self.client.get_cloud_front_origin_access_identity(
+                        Id=item['Id']
+                        )['CloudFrontOriginAccessIdentity']['Id']
 
     def get_origin_access_identity_config(self, domain_name):
+        """Returns Origin Access ID Config."""
         oai_list = self.client.list_cloud_front_origin_access_identities()['CloudFrontOriginAccessIdentityList']['Items']
         paginator = self.client.get_paginator('list_cloud_front_origin_access_identities')
         for page in paginator.paginate():
@@ -120,7 +138,7 @@ class CloudFrontManager:
                     return self.client.get_cloud_front_origin_access_identity_config(Id=item['Id'])
 
     def get_matching_distributions(self, domain_name):
-        """List matching CloudFront distributions for a domain name."""
+        """List CloudFront distributions that matches specified domain name."""
         paginator = self.client.get_paginator('list_distributions')
         for page in paginator.paginate():
 
@@ -130,12 +148,22 @@ class CloudFrontManager:
                     return item
         return None
 
-    def remove_cloud_front_tag(self, domain_name, tag_key='Creator'):
+    def get_cloud_front_arn(self, domain_name):
+        return self.get_matching_distributions(domain_name)['ARN']
+
+    def get_cloud_front_tags(self, domain_name):
+        cf_arn = self.get_cloud_front_arn(domain_name)
+        tags = self.client.list_tags_for_resource(Resource=cf_arn)['Tags']['Items']
+        for t in tags:
+            print(t)
+        return tags
+
+    def remove_cloud_front_tag(self, domain_name, tag_key='Creator', tag_value=None):
         """Removes tag from specified Cloud Front Distribution."""
 
-        cf_arn = self.get_matching_distributions(domain_name)['ARN']
+        cf_arn = self.get_cloud_front_arn(domain_name)
 
-        if cf_arn:        
+        if cf_arn:
             self.client.untag_resource(
                 Resource=cf_arn,
                 TagKeys={
@@ -144,43 +172,21 @@ class CloudFrontManager:
                     ]
                 }
             )
-            return print(f'Removing {tag_key} from {cf_arn}.')
+            return print(f'Removing tag "{tag_key}" from {cf_arn} for "{domain_name}".')
         return print(f'CloudFront Distribution ARN: {cf_arn}, does not appear to exist.')
-                
 
-    def set_cloud_front_tag(self, domain_name, key='Creator', value='Web-Sync'):
-        """Tags specified s3 bucket"""
-        new_tags = []
-        try:
-            tag = self.s3.BucketTagging(bucket_name=bucket_name).tag_set
-            for t in tag:
-                if t['Key'] == key and t['Value'] == value:
-                    pass
-                elif key == t['Key']:
-                    print(f'Tag was {key}: {t["Value"]} \nTag updated to {key}: {value}')
-                else:
-                    new_tags.append(t)
-            new_tags.append({'Key': key, 'Value': value})
-        except:
-            print(f'Setting bucket tag to {key}: {value}')
-            new_tags.append({'Key': key, 'Value': value})
-        self.s3.BucketTagging(bucket_name=bucket_name).put(Tagging={
-            'TagSet': new_tags
+    def set_cloud_front_tag(self, domain_name, tag_key='Creator', tag_value='Web-Sync', arn=None):
+        """Tags specified Cloud Front Distribution"""
+        if arn is None:
+            arn = self.get_cloud_front_arn(domain_name)
+        return self.client.tag_resource(
+            Resource=arn,
+            Tags={
+                'Items': [
+                    {
+                        'Key': tag_key,
+                        'Value': tag_value
+                    },
+                ]
             }
         )
-
-
-
-session = SessionConfig('awstools').session
-domain_name = 'websync.dustinreed.info'
-cf = CloudFrontManager(session)
-pass
-# cf.create_origin_access_identity('box4.dustinreed.info')
-
-# oai_list = client.list_cloud_front_origin_access_identities()['CloudFrontOriginAccessIdentityList']['Items']
-
-# for item in oai_list:
-#     if domain_name == item['Comment']:
-#         return item['Id']
-# print('No OAI ID matching {domain_name} found.  Creating new OAI ID.')
-    # self.create_origin_access_identity(self, domain_name)        ##Create method
