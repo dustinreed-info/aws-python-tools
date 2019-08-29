@@ -20,7 +20,6 @@ class BucketManager:
     def __init__(self, session):
         self.session = session
         self.s3 = self.session.resource('s3')
-        # self.session = boto3.Session(profile_name='awstools')
 
         self.transfer_config = boto3.s3.transfer.TransferConfig(
             multipart_chunksize=self.CHUNK_SIZE,
