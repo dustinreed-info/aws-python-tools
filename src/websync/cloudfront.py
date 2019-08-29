@@ -3,7 +3,7 @@
 
 import uuid
 import boto3
-# from session import SessionConfig
+
 
 
 class CloudFrontManager:
