@@ -20,7 +20,7 @@ class CloudFrontManager:
             'MaxAttempts': 75
         })
 
-    def create_distribution(self, domain_name, certificate, tag_key='Creator', tag_value='Web-Sync'):
+    def create_distribution_with_tags(self, domain_name, certificate, tag_key='Creator', tag_value='Web-Sync'):
         """Creates Cloud Front CDN Distribution.
         First it checks if an Origin Access ID exists for a domain.
         If one is not found it goes ahead and creates one.
@@ -42,69 +42,71 @@ class CloudFrontManager:
             origin_access_id = self.create_origin_access_identity(domain_name)
         result = self.client.create_distribution_with_tags(
             DistributionConfigWithTags={
-                'CallerReference': str(uuid.uuid4()),
-                'Aliases': {
-                    'Quantity': 1,
-                    'Items': [
-                        domain_name
-                    ]
-                },
-                'DefaultRootObject': 'index.html',
-                'Comment': 'Created by web-sync.',
-                'Enabled': True,
-                'Origins': {
-                    'Quantity': 1,
-                    'Items': [
-                        {
-                            'Id': origin_id,
-                            'DomainName': '{}.s3.amazonaws.com'.format(
-                                domain_name
-                                ),
-                            'S3OriginConfig': {
-                                'OriginAccessIdentity': 'origin-access-identity/cloudfront/{}'.format(
-                                    origin_access_id
-                                    )
+                'DistributionConfig': {
+                    'CallerReference': str(uuid.uuid4()),
+                    'Aliases': {
+                        'Quantity': 1,
+                        'Items': [
+                            domain_name
+                        ]
+                    },
+                    'DefaultRootObject': 'index.html',
+                    'Comment': 'Created by web-sync.',
+                    'Enabled': True,
+                    'Origins': {
+                        'Quantity': 1,
+                        'Items': [
+                            {
+                                'Id': origin_id,
+                                'DomainName': '{}.s3.amazonaws.com'.format(
+                                    domain_name
+                                    ),
+                                'S3OriginConfig': {
+                                    'OriginAccessIdentity': 'origin-access-identity/cloudfront/{}'.format(
+                                        origin_access_id
+                                        )
+                                }
                             }
-                        }
-                    ]
-                },
-                'DefaultCacheBehavior': {
-                    'TargetOriginId': origin_id,
-                    'ViewerProtocolPolicy': 'redirect-to-https',
-                    'TrustedSigners': {
-                        'Quantity': 0,
-                        'Enabled': False
+                        ]
                     },
-                    'ForwardedValues': {
-                        'Cookies': {
-                            'Forward': 'all'
+                    'DefaultCacheBehavior': {
+                        'TargetOriginId': origin_id,
+                        'ViewerProtocolPolicy': 'redirect-to-https',
+                        'TrustedSigners': {
+                            'Quantity': 0,
+                            'Enabled': False
                         },
-                        'Headers': {
-                            'Quantity': 0
+                        'ForwardedValues': {
+                            'Cookies': {
+                                'Forward': 'all'
+                            },
+                            'Headers': {
+                                'Quantity': 0
+                            },
+                            'QueryString': False,
+                            'QueryStringCacheKeys': {
+                                'Quantity': 0
+                            }
                         },
-                        'QueryString': False,
-                        'QueryStringCacheKeys': {
-                            'Quantity': 0
-                        }
+                        'DefaultTTL': 86400,
+                        'MinTTL': 3600
                     },
-                    'DefaultTTL': 86400,
-                    'MinTTL': 3600
+                    'ViewerCertificate': {
+                        'ACMCertificateArn': certificate['CertificateArn'],
+                        'SSLSupportMethod': 'sni-only',
+                        'MinimumProtocolVersion': 'TLSv1.1_2016'
+                    },
                 },
-                'ViewerCertificate': {
-                    'ACMCertificateArn': certificate['CertificateArn'],
-                    'SSLSupportMethod': 'sni-only',
-                    'MinimumProtocolVersion': 'TLSv1.1_2016'
-                },
-                'Tags': {
-                    'Items': [
-                        {
-                            'Key': tag_key,
-                            'Value': tag_value
-                        }
-                    ]
-                }
+            'Tags': {
+                'Items': [
+                    {
+                        'Key': tag_key,
+                        'Value': tag_value
+                    },
+                ]
             }
-        )
+        }
+    )
         return result['Distribution']
 
     def create_origin_access_identity(self, domain_name):
