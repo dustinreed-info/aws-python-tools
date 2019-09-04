@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='Websync',
-    version='0.50',
+    version='0.53',
     author='Dustin Reed',
     author_email='dustin@dustinreed.info',
     description='Web-sync is a tool to deploy static websites to an s3 bucket and use CloudFront CDN to deliver it world wide.',
