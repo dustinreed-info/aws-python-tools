@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import uuid
-import src.websync.utils
+import utils
 
 """Classes for AWS Route 53 DNS."""
 
