@@ -6,7 +6,7 @@
 from pathlib import Path
 import mimetypes
 import boto3
-import src.websync.utils
+import utils
 from functools import reduce
 from hashlib import md5
 from botocore.exceptions import ClientError
@@ -51,6 +51,7 @@ class BucketManager:
                 self.new_bucket = self.s3.create_bucket(Bucket=bucket_name)
             else:
                 self.new_bucket = self.s3.Bucket(bucket_name)
+        self.new_bucket.wait_until_exists()
         return self.new_bucket
 
     def file_upload(self, bucket_name, path, key):
@@ -238,7 +239,7 @@ class BucketManager:
 
     def suspend_bucket_versioning(self, bucket_name):
         """Suspends bucket versioning."""
-        self.s3.Bucket(bucket_name).Versioning().delete()
+        self.s3.BucketVersioning(bucket_name).suspend()
 
     def sync_bucket(self, pathname, bucket):
         """Sync contents of pathname to s3 bucket."""
