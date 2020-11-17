@@ -37,8 +37,15 @@ Web-sync requires the following:
 - SSL certificate for domain that you want to deploy CloudFront Distributino to.
 
 ### Installation
-- pip install ./dist/Websync-0.50-py3-none-any.whl
+```
+pip install pipenv
+pipenv run sudo python3 ./setup.py install 
+```
 
+### Alternative Install
+```
+pip install ./dist/Websync-0.50-py3-none-any.whl
+```
 ### Examples
 - websync [Option] COMMAND [ARGS]
 - websync --help

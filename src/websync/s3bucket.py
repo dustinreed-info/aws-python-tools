@@ -6,7 +6,6 @@
 from pathlib import Path
 import mimetypes
 import boto3
-import utils
 from functools import reduce
 from hashlib import md5
 from botocore.exceptions import ClientError

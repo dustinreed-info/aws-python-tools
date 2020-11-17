@@ -17,12 +17,12 @@ from pathlib import Path
 import click
 import boto3
 from botocore.exceptions import ClientError
-from dns import DNS_Manager
-from cert import CertificateManager
-from cloudfront import CloudFrontManager
-from s3bucket import BucketManager
-from session import SessionConfig
-import utils
+from websync.dns import DNS_Manager
+from websync.cert import CertificateManager
+from websync.cloudfront import CloudFrontManager
+from websync.s3bucket import BucketManager
+from websync.session import SessionConfig
+
 
 
 
