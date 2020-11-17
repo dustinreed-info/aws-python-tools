@@ -9,7 +9,7 @@ import boto3
 from functools import reduce
 from hashlib import md5
 from botocore.exceptions import ClientError
-
+from websync import utils
 
 class BucketManager:
     """Methods to manage S3 buckets."""
